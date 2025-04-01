@@ -135,7 +135,7 @@ public class PureConsumerProva implements Consumer {
     /*
      * Update item with Pure
      */
-    private Response updateItemWithPure(String itemPureId, String itemJson, String pureApiUrl) throws Exception {
+    private String updateItemWithPure(String itemPureId, String itemJson, String pureApiUrl) throws Exception {
         // Making a POST request to update the item with Pure
         String url = String.format("https://%s/ws/api/research-outputs/%s", pureApiUrl, itemPureId);
         Map<String, String> headers = new HashMap<>();
