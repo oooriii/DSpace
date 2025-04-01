@@ -5,7 +5,8 @@
  *
  * http://www.dspace.org/license/
  */
-package org.dspace.event;
+//package org.dspace.event;
+package org.dspace.pure;
 
 import java.sql.SQLException;
 
@@ -105,7 +106,7 @@ public class PURESyncConsumer implements Consumer {
         String metadataName = configurationService.getProperty("pure.metadata.name");
         if (metadataName == null) {
             // default to "pure_id"
-            metadataName = "cd.identifier.gerioid";
+            metadataName = "dc.identifier.gerioid";
         }
 
         // need to get the item pure id from the item

@@ -84,7 +84,7 @@ public class PureConsumerProva implements Consumer {
         String metadataName = configurationService.getProperty("pure.metadata.name");
         if (metadataName == null) {
             // default to "pure_id"
-            metadataName = "cd.identifier.gerioid";
+            metadataName = "dc.identifier.gerioid";
         }
 
         // log the metadata name
