@@ -5,7 +5,7 @@
  *
  * http://www.dspace.org/license/
  */
-package org.dspace.event;
+package org.dspace.pure;
 
 import java.sql.SQLException;
 
