@@ -37,7 +37,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
-
 /**
  * @author Pascal-Nicolas Becker (p dot becker at tu hyphen berlin dot de)
  * @author Kim Shepherd
@@ -128,11 +127,8 @@ public class PureConsumerProva implements Consumer {
             // http request
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             log.info("Dispatcher API response: " + response.body());
-        } catch (IOException e) {
-            log.error("IOException occurred while making request to dispatcher API: " + e.getMessage());
-        } catch (InterruptedException e) {
-            log.error("Request to dispatcher API was interrupted: " + e.getMessage());
-            Thread.currentThread().interrupt(); // Restore the interrupted status
+        } catch (Exception e) {
+            log.error("Exception occurred while making request to dispatcher API: " + e.getMessage());
         }
         
         
