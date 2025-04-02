@@ -82,8 +82,14 @@ public class PureConsumerProva implements Consumer {
         }
 
         // get the id of the object
-        DSpaceObject object = event.getObject(ctx);
-        String objectId = object.getID().toString();
+        //DSpaceObject object = event.getObject(ctx);
+        //String objectId = object.getID().toString();
+
+        // prova
+        //DSpaceObject object = event.getSubject(ctx);
+
+        // get the id of the object
+        String objectId = event.getSubjectID().toString();
 
         // log the metadata name
         log.info("--------------------------------");
