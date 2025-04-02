@@ -32,6 +32,11 @@ import org.dspace.workflow.factory.WorkflowServiceFactory;
 
 import org.dspace.content.DSpaceObject;
 import java.util.UUID;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 
 /**
  * @author Pascal-Nicolas Becker (p dot becker at tu hyphen berlin dot de)
@@ -96,9 +101,42 @@ public class PureConsumerProva implements Consumer {
         log.info("Event PURE CONSUMER PROVA: ");
         log.info("Metadata Name: " + metadataName);
         log.info("Pure API URL: " + pureApiUrl);
-        log.info("Pure API Key: " + pureApiKey);
+        //log.info("Pure API Key: " + pureApiKey);
         log.info("Object ID: " + objectId);
         log.info("--------------------------------");
+        
+        // make request to dispatcher api
+        String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
+        if (dispatcherApiUrl == null) {
+            log.warn("PURESyncConsumer cannot get dispatcher API URL, skipping: " + event.toString());
+            return;
+        }
+        String dispatcherApiKey = configurationService.getProperty("dispatcher.api.key");
+        if (dispatcherApiKey == null) {
+            log.warn("PURESyncConsumer cannot get dispatcher API key, skipping: " + event.toString());
+            return;
+        }
+        try {
+            // make request to dispatcher api
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(dispatcherApiUrl + "/dispatch/" + objectId))
+                .header("Authorization", dispatcherApiKey) // Changed to match the authorization method in dispatcher.py
+                .header("Content-Type", "application/json")
+                .build();
+
+            // http request
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            log.info("Dispatcher API response: " + response.body());
+        } catch (IOException e) {
+            log.error("IOException occurred while making request to dispatcher API: " + e.getMessage());
+        } catch (InterruptedException e) {
+            log.error("Request to dispatcher API was interrupted: " + e.getMessage());
+            Thread.currentThread().interrupt(); // Restore the interrupted status
+        }
+        
+        
+        
 
     }
 
