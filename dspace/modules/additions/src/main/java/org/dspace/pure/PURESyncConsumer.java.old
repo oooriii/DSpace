@@ -77,7 +77,9 @@ public class PURESyncConsumer implements Consumer {
             return;
         }
 
-        DSpaceObject dso = event.getSubject(ctx);
+        
+        DSpaceObject object = event.getObject(ctx);
+        
         //FIXME
         if (!(dso instanceof Item)) {
             log.debug("PURESyncConsumer got an event whose subject was not an item, "
@@ -110,6 +112,7 @@ public class PURESyncConsumer implements Consumer {
         }
 
         // need to get the item pure id from the item
+        
         String itemPureId = item.getMetadata(metadataName)[0];
 
         if (itemPureId == null) {

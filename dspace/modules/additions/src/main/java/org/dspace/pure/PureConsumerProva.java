@@ -30,14 +30,8 @@ import org.dspace.services.factory.DSpaceServicesFactory;
 import org.dspace.utils.DSpace;
 import org.dspace.workflow.factory.WorkflowServiceFactory;
 
-// import json
-import org.json.JSONObject;
-import java.util.HashMap;
-import java.util.Map;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
+import org.dspace.content.DSpaceObject;
+import java.util.UUID;
 
 /**
  * @author Pascal-Nicolas Becker (p dot becker at tu hyphen berlin dot de)
@@ -87,12 +81,17 @@ public class PureConsumerProva implements Consumer {
             metadataName = "dc.identifier.gerioid";
         }
 
+        // get the id of the object
+        DSpaceObject object = event.getObject(ctx);
+        String objectId = object.getID().toString();
+
         // log the metadata name
         log.info("--------------------------------");
         log.info("Event PURE CONSUMER PROVA: ");
         log.info("Metadata Name: " + metadataName);
         log.info("Pure API URL: " + pureApiUrl);
         log.info("Pure API Key: " + pureApiKey);
+        log.info("Object ID: " + objectId);
         log.info("--------------------------------");
 
     }
@@ -108,47 +107,5 @@ public class PureConsumerProva implements Consumer {
         // nothing to do
     }
 
-    /*
-     * Get item from Pure
-     */
-    private String getItemFromPure(String itemPureId, String pureApiUrl) throws Exception {
-        // get item from Pure
-        // Constructing the URL for the API endpoint
-        String url = String.format("https://%s/ws/api/research-outputs/%s", pureApiUrl, itemPureId);
-        
-        // Creating the headers for the request
-        Map<String, String> headers = new HashMap<>();
-        headers.put("api-key", pureToken);
-        
-        // Making the GET request to retrieve the item from Pure
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), String.class);
-        
-        // Checking if the response is successful
-        if (response.getStatusCode() == HttpStatus.OK) {
-            String itemJson = response.getBody();
-        } else {
-            throw new Exception("Failed to retrieve item from Pure: " + response.getStatusCode());
-        }
-        return itemJson;
-    }
 
-    /*
-     * Update item with Pure
-     */
-    private String updateItemWithPure(String itemPureId, String itemJson, String pureApiUrl) throws Exception {
-        // Making a POST request to update the item with Pure
-        String url = String.format("https://%s/ws/api/research-outputs/%s", pureApiUrl, itemPureId);
-        Map<String, String> headers = new HashMap<>();
-        headers.put("api-key", pureToken);
-        HttpEntity<String> requestEntity = new HttpEntity<>(itemJson, headers);
-        
-        ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
-        
-        // Check if the response is successful
-        if (responseEntity.getStatusCode() == HttpStatus.OK) {
-            return responseEntity.getBody();
-        } else {
-            throw new Exception("Failed to update item with Pure: " + responseEntity.getStatusCode());
-        }
-    }
 }
