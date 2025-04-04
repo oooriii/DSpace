@@ -38,8 +38,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 /**
- * @author Pascal-Nicolas Becker (p dot becker at tu hyphen berlin dot de)
- * @author Kim Shepherd
+ * @author Oriol Olivé (oriol dot olive at udg dot edu)
  */
 public class PureConsumerProva implements Consumer {
     /**
