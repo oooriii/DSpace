@@ -34,6 +34,7 @@ import org.dspace.content.DSpaceObject;
 import org.dspace.content.Bundle;
 import org.dspace.authorize.ResourcePolicy;
 import java.util.UUID;
+import java.util.List;
 
     /**
      * @author Oriol Olivé (oriol dot olive at udg dot edu)
