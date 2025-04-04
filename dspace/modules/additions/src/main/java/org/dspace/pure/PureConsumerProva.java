@@ -119,6 +119,7 @@ public class PureConsumerProva implements Consumer {
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(dispatcherApiUrl + "/dispatch/" + objectId))
+                .version(HttpClient.Version.HTTP_1_1)
                 .header("Authorization", dispatcherApiKey) // Changed to match the authorization method in dispatcher.py
                 .header("Content-Type", "application/json")
                 .build();
