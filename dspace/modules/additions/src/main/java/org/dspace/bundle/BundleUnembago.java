@@ -69,7 +69,7 @@ public class BundleUnembago implements Consumer {
             return;
         }
         // get the object
-        DSpaceObject dso = event.getSubject();
+        DSpaceObject dso = event.getSubject(ctx);
         Bundle bundle = (Bundle) dso;
 
         // get name of the bundle
