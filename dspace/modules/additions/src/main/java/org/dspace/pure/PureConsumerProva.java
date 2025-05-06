@@ -46,6 +46,8 @@ public class PureConsumerProva implements Consumer {
      * log4j logger
      */
     private static Logger log = org.apache.logging.log4j.LogManager.getLogger(PureConsumerProva.class);
+    
+    private final List<UUID> itemIDsToSync = new ArrayList<>();
 
     ConfigurationService configurationService;
 
