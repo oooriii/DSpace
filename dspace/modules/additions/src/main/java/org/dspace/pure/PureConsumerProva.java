@@ -129,12 +129,12 @@ public class PureConsumerProva implements Consumer {
             // async??
             //HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             CompletableFuture<HttpResponse<String>> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-            response.thenAccept(httpResponse -> {
+            try {
+                HttpResponse<String> httpResponse = response.join();
                 log.info("Dispatcher API response: " + httpResponse.body());
-            }).exceptionally(throwable -> {
-                log.error("Error processing response: " + throwable.getMessage());
-                return null;
-            });
+            } catch (Exception e) {
+                log.error("Error processing response: " + e.getMessage());
+            }
         } catch (Exception e) {
             log.error("Exception occurred while making request to dispatcher API: " + e.getMessage());
         }
