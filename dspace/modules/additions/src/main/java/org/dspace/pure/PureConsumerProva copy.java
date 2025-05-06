@@ -59,7 +59,6 @@ public class PureConsumerProva implements Consumer {
 
     }
 
-/*   posa a end de dispatcher
     // as we use asynchronous metadata update, our updates are not very expensive.
     // so we can do everything in the consume method.
     @Override
@@ -148,64 +147,16 @@ public class PureConsumerProva implements Consumer {
             log.error("Exception occurred while making request to dispatcher API: " + e.getMessage());
         }
         
-            
+        
+        
 
-    }
-
-*/
-
-    @Override
-    public void consume(Context ctx, Event event) throws Exception {
-        // Desa l'UUID per després
-        UUID objectId = event.getSubjectID();
-        log.info("Queued item for sync after commit: {}", objectId);
-        itemIDsToSync.add(objectId);
     }
 
     @Override
-    public void end(Context ctx) {
-        for (UUID itemId : itemIDsToSync) {
-            callDispatcherApi(itemId);
-        }
-        itemIDsToSync.clear();
+    public void end(Context ctx) throws Exception {
+
+
     }
-
-    private void callDispatcherApi(UUID itemId) {
-        try {
-            String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
-            String dispatcherApiKey = configurationService.getProperty("dispatcher.api.key");
-
-            if (dispatcherApiUrl == null || dispatcherApiKey == null) {
-                log.warn("Dispatcher API config missing. URL: {}, KEY: {}", dispatcherApiUrl, dispatcherApiKey);
-                return;
-            }
-
-            HttpClient client = HttpClient.newHttpClient();
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(dispatcherApiUrl + "/dispatch/" + itemId))
-                    .version(HttpClient.Version.HTTP_1_1)
-                    .header("Authorization", dispatcherApiKey)
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .header("User-Agent", "DSpace-Pure-Integration")
-                    .GET()
-                    .build();
-
-            CompletableFuture<HttpResponse<String>> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-            HttpResponse<String> httpResponse = response.join();
-
-            log.info("Dispatcher API response for item {}: {}", itemId, httpResponse.statusCode());
-            log.debug("Response body: {}", httpResponse.body());
-
-            if (httpResponse.statusCode() != 200) {
-                log.error("Dispatcher API returned error for item {}: {}", itemId, httpResponse.statusCode());
-            }
-
-        } catch (Exception e) {
-            log.error("Error calling dispatcher API for item {}: {}", itemId, e.getMessage(), e);
-        }
-    }
-
 
     @Override
     public void finish(Context ctx) throws Exception {
