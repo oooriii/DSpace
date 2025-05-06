@@ -37,6 +37,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.concurrent.CompletableFuture;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Oriol Olivé (oriol dot olive at udg dot edu)
@@ -46,7 +48,7 @@ public class PureConsumerProva implements Consumer {
      * log4j logger
      */
     private static Logger log = org.apache.logging.log4j.LogManager.getLogger(PureConsumerProva.class);
-    
+
     private final List<UUID> itemIDsToSync = new ArrayList<>();
 
     ConfigurationService configurationService;
