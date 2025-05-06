@@ -125,7 +125,9 @@ public class PureConsumerProva implements Consumer {
                 .build();
 
             // http request
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            // async??
+            //HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             log.info("Dispatcher API response: " + response.body());
         } catch (Exception e) {
             log.error("Exception occurred while making request to dispatcher API: " + e.getMessage());
