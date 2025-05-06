@@ -36,6 +36,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * @author Oriol Olivé (oriol dot olive at udg dot edu)
@@ -127,7 +128,7 @@ public class PureConsumerProva implements Consumer {
             // http request
             // async??
             //HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            HttpResponse<String> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+            CompletableFuture<HttpResponse<String>> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             log.info("Dispatcher API response: " + response.body());
         } catch (Exception e) {
             log.error("Exception occurred while making request to dispatcher API: " + e.getMessage());
