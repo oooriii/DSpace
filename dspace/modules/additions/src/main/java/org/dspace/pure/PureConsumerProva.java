@@ -189,6 +189,13 @@ public class PureConsumerProva implements Consumer {
                 dispatcherApiUrl, 
                 dispatcherApiKey != null ? "Yes" : "No");
         
+        // Add a delay before making the request to ensure item is created
+        try {
+            Thread.sleep(5000); // 5 second delay
+        } catch (InterruptedException e) {
+            log.error("Interrupted while waiting for item creation", e);
+        }
+        
         for (UUID itemId : itemIDsToSync) {
             try {
                 callDispatcherApi(itemId);
@@ -248,7 +255,7 @@ public class PureConsumerProva implements Consumer {
             HttpClient client = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .connectTimeout(java.time.Duration.ofSeconds(30))  // Increased timeout
                 .build();
 
             // Build the request with explicit headers
