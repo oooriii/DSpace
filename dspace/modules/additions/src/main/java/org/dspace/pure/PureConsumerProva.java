@@ -42,6 +42,9 @@ import java.util.List;
 
 import java.lang.Process;
 import java.lang.Runtime;
+import java.net.http.HttpHeaders;
+import java.util.Optional;
+
 
 /**
  * @author Oriol Olivé (oriol dot olive at udg dot edu)
