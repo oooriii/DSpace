@@ -223,7 +223,7 @@ public class PureConsumerProva implements Consumer {
             String responseBody = new String(process.getInputStream().readAllBytes());
             int statusCode = exitCode == 0 ? 200 : 500; // Basic status code mapping
 
-            
+            /*
             // Create a mock HttpResponse object to maintain compatibility
             HttpResponse<String> httpResponse = new HttpResponse<String>() {
                 @Override
@@ -256,6 +256,8 @@ public class PureConsumerProva implements Consumer {
             if (httpResponse.statusCode() != 200) {
                 log.error("Dispatcher API returned error for item {}: {}", itemId, httpResponse.statusCode());
             }
+            */
+            log.info("Dispatcher API response for item {}: {}", itemId, statusCode);
 
         } catch (Exception e) {
             log.error("Error calling dispatcher API for item {}: {}", itemId, e.getMessage(), e);
