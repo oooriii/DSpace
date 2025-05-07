@@ -40,6 +40,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.lang.Process;
+import java.lang.Runtime;
+
 /**
  * @author Oriol Olivé (oriol dot olive at udg dot edu)
  */
@@ -199,20 +202,25 @@ public class PureConsumerProva implements Consumer {
             CompletableFuture<HttpResponse<String>> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             HttpResponse<String> httpResponse = response.join();
             */
-            ProcessBuilder processBuilder = new ProcessBuilder("curl", "-X", "GET",
-                    dispatcherApiUrl + "/dispatch/" + itemId,
-                    "-H", "Authorization: " + dispatcherApiKey,
-                    "-H", "Content-Type: application/json",
-                    "-H", "Accept: application/json",
-                    "-H", "User-Agent: DSpace-Pure-Integration");
-            
-            Process process = processBuilder.start();
+            // Execute curl command using Runtime.exec()
+            String[] command = {
+                "curl",
+                "-X", "GET",
+                dispatcherApiUrl + "/dispatch/" + itemId,
+                "-H", "Authorization: " + dispatcherApiKey,
+                "-H", "Content-Type: application/json", 
+                "-H", "Accept: application/json",
+                "-H", "User-Agent: DSpace-Pure-Integration"
+            };
+
+            Process process = Runtime.getRuntime().exec(command);
             int exitCode = process.waitFor();
-            
+
             // Read the response
             String responseBody = new String(process.getInputStream().readAllBytes());
             int statusCode = exitCode == 0 ? 200 : 500; // Basic status code mapping
-            
+
+            /*
             // Create a mock HttpResponse object to maintain compatibility
             HttpResponse<String> httpResponse = new HttpResponse<String>() {
                 @Override
@@ -237,6 +245,7 @@ public class PureConsumerProva implements Consumer {
                 @Override
                 public HttpClient.Version version() { return null; }
             };
+            */
 
             log.info("Dispatcher API response for item {}: {}", itemId, httpResponse.statusCode());
             log.debug("Response body: {}", httpResponse.body());
