@@ -174,10 +174,12 @@ public class PureConsumerProva implements Consumer {
 
     @Override
     public void end(Context ctx) {
+        /*
         for (UUID itemId : itemIDsToSync) {
             callDispatcherApi(itemId);
         }
         itemIDsToSync.clear();
+        */
     }
 
     private void callDispatcherApi(UUID itemId) {
@@ -190,7 +192,7 @@ public class PureConsumerProva implements Consumer {
                 return;
             }
 
-            /*
+            
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(dispatcherApiUrl + "/dispatch/" + itemId))
@@ -204,7 +206,8 @@ public class PureConsumerProva implements Consumer {
 
             CompletableFuture<HttpResponse<String>> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
             HttpResponse<String> httpResponse = response.join();
-            */
+            
+            /*
             // Execute curl command using Runtime.exec()
             String[] command = {
                 "curl",
@@ -222,7 +225,7 @@ public class PureConsumerProva implements Consumer {
             // Read the response
             String responseBody = new String(process.getInputStream().readAllBytes());
             int statusCode = exitCode == 0 ? 200 : 500; // Basic status code mapping
-
+            */
             /*
             // Create a mock HttpResponse object to maintain compatibility
             HttpResponse<String> httpResponse = new HttpResponse<String>() {
@@ -248,7 +251,7 @@ public class PureConsumerProva implements Consumer {
                 @Override
                 public HttpClient.Version version() { return null; }
             };
-            
+            */
 
             log.info("Dispatcher API response for item {}: {}", itemId, httpResponse.statusCode());
             log.debug("Response body: {}", httpResponse.body());
@@ -256,8 +259,8 @@ public class PureConsumerProva implements Consumer {
             if (httpResponse.statusCode() != 200) {
                 log.error("Dispatcher API returned error for item {}: {}", itemId, httpResponse.statusCode());
             }
-            */
-            log.info("Dispatcher API response for item {}: {}", itemId, statusCode);
+            
+            //log.info("Dispatcher API response for item {}: {}", itemId, statusCode);
 
         } catch (Exception e) {
             log.error("Error calling dispatcher API for item {}: {}", itemId, e.getMessage(), e);
@@ -267,7 +270,10 @@ public class PureConsumerProva implements Consumer {
 
     @Override
     public void finish(Context ctx) throws Exception {
-        // nothing to do
+        for (UUID itemId : itemIDsToSync) {
+            callDispatcherApi(itemId);
+        }
+        itemIDsToSync.clear();
     }
 
 
