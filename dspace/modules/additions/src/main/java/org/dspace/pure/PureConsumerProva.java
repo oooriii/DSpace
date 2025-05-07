@@ -167,7 +167,7 @@ public class PureConsumerProva implements Consumer {
 
     @Override
     public void consume(Context ctx, Event event) throws Exception {
-        // Desa l'UUID per després
+        // Queue the item for later processing
         UUID objectId = event.getSubjectID();
         log.info("Queued item for sync after commit: {}", objectId);
         itemIDsToSync.add(objectId);
@@ -175,12 +175,18 @@ public class PureConsumerProva implements Consumer {
 
     @Override
     public void end(Context ctx) {
+        // Just log that we're ending the event
+        log.info("Event ending, items will be processed after commit");
+    }
+
+    @Override
+    public void finish(Context ctx) {
         if (itemIDsToSync.isEmpty()) {
             log.info("No items to sync with dispatcher API");
             return;
         }
 
-        log.info("Starting dispatcher API sync for {} items - END", itemIDsToSync.size());
+        log.info("Starting dispatcher API sync for {} items - FINISH", itemIDsToSync.size());
         
         // Debug configuration
         String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
@@ -210,7 +216,7 @@ public class PureConsumerProva implements Consumer {
         }
         
         itemIDsToSync.clear();
-        log.info("Dispatcher API sync completed - END");
+        log.info("Dispatcher API sync completed - FINISH");
     }
 
     private boolean verifyItemExists(Context ctx, UUID itemId) {
