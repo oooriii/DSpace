@@ -271,9 +271,9 @@ public class PureConsumerProva implements Consumer {
                     httpResponse.headers());
             log.info("Response body: {}", httpResponse.body());
 
-            if (httpResponse.status_code() != 200) {
+            if (httpResponse.statusCode() != 200) {
                 log.error("Dispatcher API returned error - Status: {}, Body: {}", 
-                        httpResponse.status_code(),
+                        httpResponse.statusCode(),
                         httpResponse.body());
             } else {
                 log.info("Successfully processed item {}", itemId);
