@@ -169,24 +169,18 @@ public class PureConsumerProva implements Consumer {
     public void consume(Context ctx, Event event) throws Exception {
         // Queue the item for later processing
         UUID objectId = event.getSubjectID();
-        log.info("Queued item for sync after commit: {}", objectId);
+        log.info("Queued item for sync: {}", objectId);
         itemIDsToSync.add(objectId);
-    }
-
-    @Override
-    public void finish(Context ctx) {
-        // Just log that we're ending the event
-        log.info("Event ending, items will be processed after commit");
     }
 
     @Override
     public void end(Context ctx) {
         if (itemIDsToSync.isEmpty()) {
-            log.info("No items to sync with dispatcher API");
+            log.info("No items to queue with dispatcher API");
             return;
         }
 
-        log.info("Starting dispatcher API sync for {} items - END", itemIDsToSync.size());
+        log.info("Queueing {} items with dispatcher API", itemIDsToSync.size());
         
         // Debug configuration
         String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
@@ -195,46 +189,24 @@ public class PureConsumerProva implements Consumer {
                 dispatcherApiUrl, 
                 dispatcherApiKey != null ? "Yes" : "No");
         
-        // Add a delay before making the request to ensure item is created
-        try {
-            Thread.sleep(5000); // 5 second delay
-        } catch (InterruptedException e) {
-            log.error("Interrupted while waiting for item creation", e);
-        }
-        
         for (UUID itemId : itemIDsToSync) {
             try {
-                // Verify item exists in DSpace before calling dispatcher
-                if (verifyItemExists(ctx, itemId)) {
-                    callDispatcherApi(itemId);
-                } else {
-                    log.error("Item {} not found in DSpace, skipping dispatcher call", itemId);
-                }
+                queueItem(itemId);
             } catch (Exception e) {
-                log.error("Failed to sync item {} with dispatcher API: {}", itemId, e.getMessage(), e);
+                log.error("Failed to queue item {} with dispatcher API: {}", itemId, e.getMessage(), e);
             }
         }
         
         itemIDsToSync.clear();
-        log.info("Dispatcher API sync completed - END");
+        log.info("Items queued with dispatcher API");
     }
 
-    private boolean verifyItemExists(Context ctx, UUID itemId) {
-        try {
-            Item item = ContentServiceFactory.getInstance().getItemService().find(ctx, itemId);
-            if (item != null) {
-                log.info("Verified item {} exists in DSpace", itemId);
-                return true;
-            }
-            log.warn("Item {} not found in DSpace", itemId);
-            return false;
-        } catch (SQLException e) {
-            log.error("Error verifying item {}: {}", itemId, e.getMessage());
-            return false;
-        }
+    @Override
+    public void finish(Context ctx) {
+        log.info("Event finished");
     }
 
-    private void callDispatcherApi(UUID itemId) {
+    private void queueItem(UUID itemId) {
         String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
         String dispatcherApiKey = configurationService.getProperty("dispatcher.api.key");
 
@@ -246,7 +218,7 @@ public class PureConsumerProva implements Consumer {
         }
 
         String fullUrl = dispatcherApiUrl + "/dispatch/" + itemId;
-        log.info("Preparing to call dispatcher API - URL: {}", fullUrl);
+        log.info("Queueing item with dispatcher API - URL: {}", fullUrl);
 
         try {
             // Create a new HttpClient with specific configuration
@@ -266,7 +238,7 @@ public class PureConsumerProva implements Consumer {
                     .GET()
                     .build();
 
-            log.info("Sending request to dispatcher API for item {}", itemId);
+            log.info("Sending request to queue item {}", itemId);
             
             // Make the request synchronously
             HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -282,13 +254,13 @@ public class PureConsumerProva implements Consumer {
                         httpResponse.statusCode(),
                         httpResponse.body());
             } else {
-                log.info("Successfully processed item {}", itemId);
+                log.info("Successfully queued item {}", itemId);
             }
         } catch (Exception e) {
-            log.error("Error calling dispatcher API for item {}: {}", itemId, e.getMessage(), e);
+            log.error("Error queueing item {}: {}", itemId, e.getMessage(), e);
             // Log the full stack trace
             log.error("Stack trace:", e);
-            throw new RuntimeException("Failed to call dispatcher API", e);
+            throw new RuntimeException("Failed to queue item", e);
         }
     }
 
