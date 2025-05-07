@@ -274,6 +274,7 @@ public class PureConsumerProva implements Consumer {
             callDispatcherApi(itemId);
         }
         itemIDsToSync.clear();
+        log.info("Dispatcher API sync completed for {} items - finished", itemIDsToSync.size());
     }
 
 
