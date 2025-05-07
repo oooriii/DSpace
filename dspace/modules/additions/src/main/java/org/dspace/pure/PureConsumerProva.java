@@ -198,7 +198,12 @@ public class PureConsumerProva implements Consumer {
         
         for (UUID itemId : itemIDsToSync) {
             try {
-                callDispatcherApi(itemId);
+                // Verify item exists in DSpace before calling dispatcher
+                if (verifyItemExists(ctx, itemId)) {
+                    callDispatcherApi(itemId);
+                } else {
+                    log.error("Item {} not found in DSpace, skipping dispatcher call", itemId);
+                }
             } catch (Exception e) {
                 log.error("Failed to sync item {} with dispatcher API: {}", itemId, e.getMessage(), e);
             }
@@ -208,32 +213,19 @@ public class PureConsumerProva implements Consumer {
         log.info("Dispatcher API sync completed - END");
     }
 
-    @Override
-    public void finish(Context ctx) throws Exception {
-        if (itemIDsToSync.isEmpty()) {
-            log.info("No items to sync with dispatcher API");
-            return;
-        }
-
-        log.info("Starting dispatcher API sync for {} items - FINISH", itemIDsToSync.size());
-        
-        // Debug configuration
-        String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
-        String dispatcherApiKey = configurationService.getProperty("dispatcher.api.key");
-        log.info("Configuration loaded - URL: {}, Key present: {}", 
-                dispatcherApiUrl, 
-                dispatcherApiKey != null ? "Yes" : "No");
-        
-        for (UUID itemId : itemIDsToSync) {
-            try {
-                callDispatcherApi(itemId);
-            } catch (Exception e) {
-                log.error("Failed to sync item {} with dispatcher API: {}", itemId, e.getMessage(), e);
+    private boolean verifyItemExists(Context ctx, UUID itemId) {
+        try {
+            Item item = ContentServiceFactory.getInstance().getItemService().find(ctx, itemId);
+            if (item != null) {
+                log.info("Verified item {} exists in DSpace", itemId);
+                return true;
             }
+            log.warn("Item {} not found in DSpace", itemId);
+            return false;
+        } catch (SQLException e) {
+            log.error("Error verifying item {}: {}", itemId, e.getMessage());
+            return false;
         }
-        
-        itemIDsToSync.clear();
-        log.info("Dispatcher API sync completed - FINISH");
     }
 
     private void callDispatcherApi(UUID itemId) {
@@ -255,7 +247,7 @@ public class PureConsumerProva implements Consumer {
             HttpClient client = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .followRedirects(HttpClient.Redirect.NORMAL)
-                .connectTimeout(java.time.Duration.ofSeconds(30))  // Increased timeout
+                .connectTimeout(java.time.Duration.ofSeconds(30))
                 .build();
 
             // Build the request with explicit headers
@@ -279,9 +271,9 @@ public class PureConsumerProva implements Consumer {
                     httpResponse.headers());
             log.info("Response body: {}", httpResponse.body());
 
-            if (httpResponse.statusCode() != 200) {
+            if (httpResponse.status_code() != 200) {
                 log.error("Dispatcher API returned error - Status: {}, Body: {}", 
-                        httpResponse.statusCode(),
+                        httpResponse.status_code(),
                         httpResponse.body());
             } else {
                 log.info("Successfully processed item {}", itemId);
