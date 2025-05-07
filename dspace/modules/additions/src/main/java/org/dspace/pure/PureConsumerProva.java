@@ -40,11 +40,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.ArrayList;
 import java.util.List;
 
+/*
 import java.lang.Process;
 import java.lang.Runtime;
 import java.net.http.HttpHeaders;
 import java.util.Optional;
-
+*/
 
 /**
  * @author Oriol Olivé (oriol dot olive at udg dot edu)
@@ -174,29 +175,85 @@ public class PureConsumerProva implements Consumer {
 
     @Override
     public void end(Context ctx) {
-        /*
-        for (UUID itemId : itemIDsToSync) {
-            callDispatcherApi(itemId);
+        if (itemIDsToSync.isEmpty()) {
+            log.info("No items to sync with dispatcher API");
+            return;
         }
+
+        log.info("Starting dispatcher API sync for {} items - END", itemIDsToSync.size());
+        
+        // Debug configuration
+        String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
+        String dispatcherApiKey = configurationService.getProperty("dispatcher.api.key");
+        log.info("Configuration loaded - URL: {}, Key present: {}", 
+                dispatcherApiUrl, 
+                dispatcherApiKey != null ? "Yes" : "No");
+        
+        for (UUID itemId : itemIDsToSync) {
+            try {
+                callDispatcherApi(itemId);
+            } catch (Exception e) {
+                log.error("Failed to sync item {} with dispatcher API: {}", itemId, e.getMessage(), e);
+            }
+        }
+        
         itemIDsToSync.clear();
-        */
+        log.info("Dispatcher API sync completed - END");
+    }
+
+    @Override
+    public void finish(Context ctx) throws Exception {
+        if (itemIDsToSync.isEmpty()) {
+            log.info("No items to sync with dispatcher API");
+            return;
+        }
+
+        log.info("Starting dispatcher API sync for {} items - FINISH", itemIDsToSync.size());
+        
+        // Debug configuration
+        String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
+        String dispatcherApiKey = configurationService.getProperty("dispatcher.api.key");
+        log.info("Configuration loaded - URL: {}, Key present: {}", 
+                dispatcherApiUrl, 
+                dispatcherApiKey != null ? "Yes" : "No");
+        
+        for (UUID itemId : itemIDsToSync) {
+            try {
+                callDispatcherApi(itemId);
+            } catch (Exception e) {
+                log.error("Failed to sync item {} with dispatcher API: {}", itemId, e.getMessage(), e);
+            }
+        }
+        
+        itemIDsToSync.clear();
+        log.info("Dispatcher API sync completed - FINISH");
     }
 
     private void callDispatcherApi(UUID itemId) {
+        String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
+        String dispatcherApiKey = configurationService.getProperty("dispatcher.api.key");
+
+        if (dispatcherApiUrl == null || dispatcherApiKey == null) {
+            log.error("Dispatcher API configuration missing. URL: {}, KEY: {}", 
+                     dispatcherApiUrl, 
+                     dispatcherApiKey != null ? "[REDACTED]" : "null");
+            return;
+        }
+
+        String fullUrl = dispatcherApiUrl + "/dispatch/" + itemId;
+        log.info("Preparing to call dispatcher API - URL: {}", fullUrl);
+
         try {
-            String dispatcherApiUrl = configurationService.getProperty("dispatcher.api.url");
-            String dispatcherApiKey = configurationService.getProperty("dispatcher.api.key");
+            // Create a new HttpClient with specific configuration
+            HttpClient client = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
 
-            if (dispatcherApiUrl == null || dispatcherApiKey == null) {
-                log.warn("Dispatcher API config missing. URL: {}, KEY: {}", dispatcherApiUrl, dispatcherApiKey);
-                return;
-            }
-
-            
-            HttpClient client = HttpClient.newHttpClient();
+            // Build the request with explicit headers
             HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(dispatcherApiUrl + "/dispatch/" + itemId))
-                    .version(HttpClient.Version.HTTP_1_1)
+                    .uri(URI.create(fullUrl))
                     .header("Authorization", dispatcherApiKey)
                     .header("Content-Type", "application/json")
                     .header("Accept", "application/json")
@@ -204,78 +261,30 @@ public class PureConsumerProva implements Consumer {
                     .GET()
                     .build();
 
-            CompletableFuture<HttpResponse<String>> response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-            HttpResponse<String> httpResponse = response.join();
+            log.info("Sending request to dispatcher API for item {}", itemId);
             
-            /*
-            // Execute curl command using Runtime.exec()
-            String[] command = {
-                "curl",
-                "-X", "GET",
-                dispatcherApiUrl + "/dispatch/" + itemId,
-                "-H", "Authorization: " + dispatcherApiKey,
-                "-H", "Content-Type: application/json", 
-                "-H", "Accept: application/json",
-                "-H", "User-Agent: DSpace-Pure-Integration"
-            };
-
-            Process process = Runtime.getRuntime().exec(command);
-            int exitCode = process.waitFor();
-
-            // Read the response
-            String responseBody = new String(process.getInputStream().readAllBytes());
-            int statusCode = exitCode == 0 ? 200 : 500; // Basic status code mapping
-            */
-            /*
-            // Create a mock HttpResponse object to maintain compatibility
-            HttpResponse<String> httpResponse = new HttpResponse<String>() {
-                @Override
-                public int statusCode() {
-                    return statusCode;
-                }
-                
-                @Override
-                public String body() {
-                    return responseBody;
-                }
-                
-                // Implement other required methods with default values
-                @Override
-                public HttpHeaders headers() { return null; }
-                @Override
-                public HttpRequest request() { return null; }
-                @Override
-                public Optional<HttpResponse<String>> previousResponse() { return Optional.empty(); }
-                @Override
-                public URI uri() { return null; }
-                @Override
-                public HttpClient.Version version() { return null; }
-            };
-            */
-
-            log.info("Dispatcher API response for item {}: {}", itemId, httpResponse.statusCode());
-            log.debug("Response body: {}", httpResponse.body());
+            // Make the request synchronously
+            HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            // Log the complete response details
+            log.info("Response received - Status: {}, Headers: {}", 
+                    httpResponse.statusCode(),
+                    httpResponse.headers());
+            log.info("Response body: {}", httpResponse.body());
 
             if (httpResponse.statusCode() != 200) {
-                log.error("Dispatcher API returned error for item {}: {}", itemId, httpResponse.statusCode());
+                log.error("Dispatcher API returned error - Status: {}, Body: {}", 
+                        httpResponse.statusCode(),
+                        httpResponse.body());
+            } else {
+                log.info("Successfully processed item {}", itemId);
             }
-            
-            //log.info("Dispatcher API response for item {}: {}", itemId, statusCode);
-
         } catch (Exception e) {
             log.error("Error calling dispatcher API for item {}: {}", itemId, e.getMessage(), e);
+            // Log the full stack trace
+            log.error("Stack trace:", e);
+            throw new RuntimeException("Failed to call dispatcher API", e);
         }
     }
-
-
-    @Override
-    public void finish(Context ctx) throws Exception {
-        for (UUID itemId : itemIDsToSync) {
-            callDispatcherApi(itemId);
-        }
-        itemIDsToSync.clear();
-        log.info("Dispatcher API sync completed for {} items - finished", itemIDsToSync.size());
-    }
-
 
 }
