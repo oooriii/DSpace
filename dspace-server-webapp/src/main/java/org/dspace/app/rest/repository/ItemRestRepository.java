@@ -268,11 +268,69 @@ public class ItemRestRepository extends DSpaceObjectRestRepository<Item, ItemRes
         relationshipService.forceDelete(obtainContext(), relationshipToDelete, copyToLeft, copyToRight);
     }
 
+// oriol - 20240514 - bypass decorator
+/*** 
+patch sol user cutre oitt
     @Override
     @PreAuthorize("hasAuthority('ADMIN')")
     protected ItemRest createAndReturn(Context context) throws AuthorizeException, SQLException {
+        // oriol
+        log.info("ORIOL! CreateAndReturn");
+        log.info(context.toString());
         HttpServletRequest req = getRequestService().getCurrentRequest().getHttpServletRequest();
         String owningCollectionUuidString = req.getParameter("owningCollection");
+        
+        ObjectMapper mapper = new ObjectMapper();
+        ItemRest itemRest = null;
+        try {
+            ServletInputStream input = req.getInputStream();
+            itemRest = mapper.readValue(input, ItemRest.class);
+        } catch (IOException e1) {
+            throw new UnprocessableEntityException("Error parsing request body", e1);
+        }
+
+        if (itemRest.getInArchive() == false) {
+            // oriol
+            log.info("ORIOL: Withdrawn!");
+            throw new DSpaceBadRequestException("InArchive attribute should not be set to false for the create");
+        }
+        UUID owningCollectionUuid = UUIDUtils.fromString(owningCollectionUuidString);
+        Collection collection = collectionService.find(context, owningCollectionUuid);
+        if (collection == null) {
+            throw new DSpaceBadRequestException("The given owningCollection parameter is invalid: "
+                + owningCollectionUuid);
+        }
+        WorkspaceItem workspaceItem = workspaceItemService.create(context, collection, false);
+        Item item = workspaceItem.getItem();
+        item.setArchived(true);
+        item.setOwningCollection(collection);
+        item.setDiscoverable(itemRest.getDiscoverable());
+        item.setLastModified(itemRest.getLastModified());
+        metadataConverter.setMetadata(context, item, itemRest.getMetadata());
+
+        Item itemToReturn = installItemService.installItem(context, workspaceItem);
+
+        return converter.toRest(itemToReturn, utils.obtainProjection());
+    }
+*/
+    @Override
+    protected ItemRest createAndReturn(Context context) throws AuthorizeException, SQLException {
+        log.info("ORIOL! CreateAndReturn bypass");
+        HttpServletRequest req = getRequestService().getCurrentRequest().getHttpServletRequest();
+//        String owningCollectionUuidString = req.getParameter("owningCollection");
+        UUID uuid = UUID.fromString(req.getParameter("owningCollection"));
+//        return createAndReturnOwningCol(context, UUID.fromString(owningCollectionUuidString));
+        return createAndReturnOwningCol(context, uuid);
+    }
+        
+
+//    @Override
+    @PreAuthorize("hasAuthority('ADMIN') || hasPermission('#uuid', 'COLLECTION', 'WRITE')")
+    protected ItemRest createAndReturnOwningCol(Context context, UUID uuid) throws AuthorizeException, SQLException {
+        log.info("ORIOL! CreateAndReturn col");
+        HttpServletRequest req = getRequestService().getCurrentRequest().getHttpServletRequest();
+        String owningCollectionUuidString = uuid.toString();
+        
         ObjectMapper mapper = new ObjectMapper();
         ItemRest itemRest = null;
         try {
@@ -303,6 +361,8 @@ public class ItemRestRepository extends DSpaceObjectRestRepository<Item, ItemRes
 
         return converter.toRest(itemToReturn, utils.obtainProjection());
     }
+
+
 
     @Override
     @PreAuthorize("hasPermission(#uuid, 'ITEM', 'WRITE')")
